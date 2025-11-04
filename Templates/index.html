@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NL2SQL Agent</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { background: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); width: 100%; max-width: 600px; }
+        .header { padding: 20px; border-bottom: 1px solid #eee; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .header p { margin: 5px 0 0; color: #555; }
+        .content { padding: 20px; }
+        .upload-section { margin-bottom: 20px; padding: 20px; background: #fafafa; border-radius: 6px; }
+        .db-status { background: #e6f7ff; border: 1px solid #b3e0ff; padding: 15px; border-radius: 6px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .db-status p { margin: 0; color: #0056b3; }
+        .db-status a { color: #d9534f; text-decoration: none; font-size: 14px; }
+        #chat-window { height: 300px; border: 1px solid #ddd; border-radius: 6px; padding: 10px; overflow-y: scroll; margin-bottom: 10px; background: #fdfdfd; }
+        #chat-form { display: flex; }
+        #chat-input { flex-grow: 1; border: 1px solid #ccc; padding: 10px; border-radius: 6px 0 0 6px; }
+        #chat-submit { background: #007bff; color: white; border: none; padding: 0 20px; border-radius: 0 6px 6px 0; cursor: pointer; }
+        #chat-submit:disabled { background: #aaa; }
+        .message { margin-bottom: 10px; padding: 8px 12px; border-radius: 18px; max-width: 80%; }
+        .user-msg { background: #007bff; color: white; align-self: flex-end; margin-left: 20%; }
+        .bot-msg { background: #e9ecef; color: #333; align-self: flex-start; margin-right: 20%; }
+        .msg-container { display: flex; flex-direction: column; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>Natural Language to SQL Agent</h1>
+            <p>Upload a <code>.sql</code> database dump to get started.</p>
+        </div>
+
+        <div class="content">
+            {% if db_name %}
+                <div class="db-status">
+                    <p><strong>Database connected:</strong> {{ db_name }}</p>
+                    <a href="/clear">Clear & Upload New</a>
+                </div>
+                <div id="chat-ui">
+                    <div id="chat-window">
+                        <div class="msg-container">
+                            <div class="message bot-msg">Hello! I'm ready to answer questions about your database: <strong>{{ db_name }}</strong>.</div>
+                        </div>
+                    </div>
+                    <form id="chat-form">
+                        <input type="text" id="chat-input" placeholder="Ask a question..." autocomplete="off">
+                        <button type="submit" id="chat-submit">Send</button>
+                    </form>
+                </div>
+            {% else %}
+                <div class="upload-section">
+                    <h2>1. Upload your Database</h2>
+                    <form action="/upload" method="POST" enctype="multipart/form-data">
+                        <input type="file" name="file" accept=".sql" required>
+                        <button type="submit">Upload & Create</button>
+                    </form>
+                </div>
+                <div id="chat-ui-disabled">
+                    <p style="text-align: center; color: #777;">Please upload a database to start chatting.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // Only run this script if the chat form exists
+        const chatForm = document.getElementById('chat-form');
+        if (chatForm) {
+            const chatInput = document.getElementById('chat-input');
+            const chatSubmit = document.getElementById('chat-submit');
+            const chatWindow = document.getElementById('chat-window');
+
+            chatForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const message = chatInput.value.trim();
+                if (!message) return;
+
+                // Disable form and add user message
+                chatInput.value = '';
+                chatSubmit.disabled = true;
+                addMessage(message, 'user');
+
+                try {
+                    // Send message to Flask backend
+                    const response = await fetch('/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: message })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.error) {
+                        addMessage(`Error: ${data.error}`, 'bot');
+                    } else {
+                        addMessage(data.answer, 'bot');
+                    }
+                } catch (err) {
+                    addMessage('An error occurred. Please try again.', 'bot');
+                } finally {
+                    // Re-enable form
+                    chatSubmit.disabled = false;
+                    chatInput.focus();
+                }
+            });
+
+            function addMessage(text, sender) {
+                const msgContainer = document.createElement('div');
+                msgContainer.className = 'msg-container';
+
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}-msg`;
+                messageDiv.textContent = text;
+                
+                msgContainer.appendChild(messageDiv);
+                chatWindow.appendChild(msgContainer);
+                chatWindow.scrollTop = chatWindow.scrollHeight; // Auto-scroll
+            }
+        }
+    </script>
+
+</body>
+</html>

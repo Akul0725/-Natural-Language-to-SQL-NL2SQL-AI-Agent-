@@ -1,0 +1,9 @@
+flask
+langgraph
+langchain-openai
+langchain-community
+psycopg2-binary # lets Python directly talk to your PostgreSQL database (execute SQL queries, fetch data, etc.).
+python-dotenv # helps to load environment variables from a .env file.
+SQLAlchemy # make working with databases easier — instead of writing raw SQL, you can use Python classes and objects.
+langchain-groq
+ipykernel
