@@ -5,8 +5,6 @@ from langchain_community.utilities.sql_database import SQLDatabase
 from langchain_core.messages import BaseMessage, HumanMessage
 from langgraph.graph import StateGraph, END
 
-# --- Agent State ---
-# (This section is unchanged)
 class AgentState(TypedDict):
     question: str
     db_uri: str
@@ -15,9 +13,6 @@ class AgentState(TypedDict):
     sql_result: str
     answer: str
     error: str
-
-# --- Agent Nodes ---
-# (All node functions: get_schema, generate_sql, execute_sql, generate_answer... are unchanged)
 
 def get_schema(state: AgentState):
     """Connects to the database and gets its schema."""
@@ -104,23 +99,17 @@ def get_compiled_app():
     Builds and compiles the LangGraph app.
     Returns the compiled app.
     """
-    # 1. Define the workflow
     workflow = StateGraph(AgentState)
-
-    # 2. Add the nodes
     workflow.add_node("get_schema", get_schema)
     workflow.add_node("generate_sql", generate_sql)
     workflow.add_node("execute_sql", execute_sql)
     workflow.add_node("generate_answer", generate_answer)
-
-    # 3. Define the edges (the flow of logic)
     workflow.set_entry_point("get_schema")
     workflow.add_edge("get_schema", "generate_sql")
     workflow.add_edge("generate_sql", "execute_sql")
     workflow.add_edge("execute_sql", "generate_answer")
-    workflow.add_edge("generate_answer", END) # End of the graph
-
-    # 4. Compile the graph into a runnable app
+    workflow.add_edge("generate_answer", END) 
+    
     app = workflow.compile()
     return app
 
@@ -128,12 +117,9 @@ def run_agent_graph(question: str, db_uri: str):
     """
     Compiles and runs the LangGraph agent.
     """
-    # Get the compiled app
     app = get_compiled_app()
     
-    # 5. Run the graph
     initial_state = {"question": question, "db_uri": db_uri}
     final_state = app.invoke(initial_state)
 
-    # Return the final answer (or an error message)
     return final_state.get("answer", "I'm sorry, I encountered an error and couldn't process your request.")
