@@ -5,25 +5,153 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NL2SQL Agent</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { background: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); width: 100%; max-width: 600px; }
-        .header { padding: 20px; border-bottom: 1px solid #eee; }
-        .header h1 { margin: 0; font-size: 24px; }
-        .header p { margin: 5px 0 0; color: #555; }
-        .content { padding: 20px; }
-        .upload-section { margin-bottom: 20px; padding: 20px; background: #fafafa; border-radius: 6px; }
-        .db-status { background: #e6f7ff; border: 1px solid #b3e0ff; padding: 15px; border-radius: 6px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        :root {
+            --primary-blue: #007bff;
+            --light-gray: #f4f7f6;
+            --border-color: #e0e0e0;
+            --bot-msg-bg: #e9ecef;
+            --user-msg-bg: var(--primary-blue);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            background-color: var(--light-gray);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 700px;
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh;
+        }
+
+        .header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .header h1 { margin: 0; font-size: 22px; }
+        .header p { margin: 5px 0 0; color: #555; font-size: 15px; }
+
+        .content {
+            padding: 24px;
+            overflow-y: auto;
+        }
+        .upload-section {
+            text-align: center;
+            padding: 30px;
+            background: #fafcff;
+            border: 2px dashed #b3d7ff;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        .upload-section h2 { 
+            margin: 0; 
+            font-size: 20px;
+            color: #333;
+        }
+        .upload-section p {
+            margin: 0;
+            color: #555;
+            font-size: 15px;
+        }
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            cursor: pointer;
+            background: #f4f7f6;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px 15px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .file-input-wrapper:hover {
+            background: #e9ecef;
+        }
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            font-size: 100px; 
+            cursor: pointer;
+        }
+        #file-name {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .upload-button {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .upload-button:hover {
+            background: #0069d9;
+        }
+        .upload-button:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+
+        .db-status {
+            background: #e6f7ff;
+            border: 1px solid #b3e0ff;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 15px;
+        }
         .db-status p { margin: 0; color: #0056b3; }
-        .db-status a { color: #d9534f; text-decoration: none; font-size: 14px; }
-        #chat-window { height: 300px; border: 1px solid #ddd; border-radius: 6px; padding: 10px; overflow-y: scroll; margin-bottom: 10px; background: #fdfdfd; }
+        .db-status a { color: #d9534f; text-decoration: none; font-size: 14px; font-weight: 500; }
+        .db-status a:hover { text-decoration: underline; }
+
+        #chat-window { height: 400px; border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; overflow-y: scroll; margin-bottom: 16px; background: #fdfdfd; display: flex; flex-direction: column; gap: 16px; }
+        .message { display: flex; align-items: flex-start; gap: 12px; max-width: 85%; }
+        .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--bot-msg-bg); color: #333; display: flex; align-items: center; justify-content: center; font-weight: 500; flex-shrink: 0; }
+        .msg-content { padding: 10px 14px; border-radius: 18px; font-size: 15px; line-height: 1.5; }
+        .bot-msg .avatar { background: var(--bot-msg-bg); content: '🤖'; }
+        .bot-msg .msg-content { background: var(--bot-msg-bg); color: #333; border-top-left-radius: 4px; }
+        .user-msg { align-self: flex-end; flex-direction: row-reverse; }
+        .user-msg .avatar { background: var(--user-msg-bg); color: white; content: '🧑'; }
+        .user-msg .msg-content { background: var(--user-msg-bg); color: white; border-top-right-radius: 4px; }
+        #loading-indicator { display: none; align-self: flex-start; margin: 0 0 10px 48px; }
+        #loading-indicator span { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #aaa; margin: 0 2px; animation: bounce 1.4s infinite ease-in-out both; }
+        #loading-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        #loading-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
         #chat-form { display: flex; }
-        #chat-input { flex-grow: 1; border: 1px solid #ccc; padding: 10px; border-radius: 6px 0 0 6px; }
-        #chat-submit { background: #007bff; color: white; border: none; padding: 0 20px; border-radius: 0 6px 6px 0; cursor: pointer; }
+        #chat-input { flex-grow: 1; border: 1px solid #ccc; padding: 12px; border-radius: 8px 0 0 8px; font-size: 15px; }
+        #chat-input:focus { outline: 1px solid var(--primary-blue); border-color: var(--primary-blue); }
+        #chat-submit { background: var(--primary-blue); color: white; border: none; padding: 0 20px; border-radius: 0 8px 8px 0; cursor: pointer; font-size: 16px; font-weight: 500; }
         #chat-submit:disabled { background: #aaa; }
-        .message { margin-bottom: 10px; padding: 8px 12px; border-radius: 18px; max-width: 80%; }
-        .user-msg { background: #007bff; color: white; align-self: flex-end; margin-left: 20%; }
-        .bot-msg { background: #e9ecef; color: #333; align-self: flex-start; margin-right: 20%; }
-        .msg-container { display: flex; flex-direction: column; }
     </style>
 </head>
 <body>
@@ -37,14 +165,20 @@
         <div class="content">
             {% if db_name %}
                 <div class="db-status">
-                    <p><strong>Database connected:</strong> {{ db_name }}</p>
+                    <p><strong>Database:</strong> {{ db_name }}</p>
                     <a href="/clear">Clear & Upload New</a>
                 </div>
                 <div id="chat-ui">
                     <div id="chat-window">
-                        <div class="msg-container">
-                            <div class="message bot-msg">Hello! I'm ready to answer questions about your database: <strong>{{ db_name }}</strong>.</div>
+                        <div class="message bot-msg">
+                            <div class="avatar">🤖</div>
+                            <div class="msg-content">
+                                Hello! I'm ready to answer questions about <strong>{{ db_name }}</strong>.
+                            </div>
                         </div>
+                    </div>
+                    <div id="loading-indicator">
+                        <span></span><span></span><span></span>
                     </div>
                     <form id="chat-form">
                         <input type="text" id="chat-input" placeholder="Ask a question..." autocomplete="off">
@@ -52,48 +186,51 @@
                     </form>
                 </div>
             {% else %}
-                <div class="upload-section">
-                    <h2>1. Upload your Database</h2>
-                    <form action="/upload" method="POST" enctype="multipart/form-data">
-                        <input type="file" name="file" accept=".sql" required>
-                        <button type="submit">Upload & Create</button>
-                    </form>
-                </div>
-                <div id="chat-ui-disabled">
-                    <p style="text-align: center; color: #777;">Please upload a database to start chatting.</p>
-                </div>
+                <form action="/upload" method="POST" enctype="multipart/form-data" id="upload-form">
+                    <div class="upload-section">
+                        <h2>Upload your Database</h2>
+                        <p>Drag & drop a <code>.sql</code> file or click to select.</p>
+                        
+                        <label class="file-input-wrapper" for="file-upload">
+                            <span>Select a .sql file</span>
+                            <input type="file" name="file" accept=".sql" id="file-upload" required>
+                        </label>
+                        <div id="file-name">No file selected</div>
+
+                        <button type="submit" class="upload-button" id="upload-button" disabled>
+                            Upload & Create
+                        </button>
+                    </div>
+                </form>
             {% endif %}
         </div>
     </div>
 
     <script>
-        // Only run this script if the chat form exists
         const chatForm = document.getElementById('chat-form');
+        
         if (chatForm) {
             const chatInput = document.getElementById('chat-input');
             const chatSubmit = document.getElementById('chat-submit');
             const chatWindow = document.getElementById('chat-window');
+            const loadingIndicator = document.getElementById('loading-indicator');
 
             chatForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 const message = chatInput.value.trim();
                 if (!message) return;
-
-                // Disable form and add user message
                 chatInput.value = '';
                 chatSubmit.disabled = true;
                 addMessage(message, 'user');
-
+                loadingIndicator.style.display = 'block';
+                chatWindow.scrollTop = chatWindow.scrollHeight;
                 try {
-                    // Send message to Flask backend
                     const response = await fetch('/chat', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ message: message })
                     });
-
                     const data = await response.json();
-
                     if (data.error) {
                         addMessage(`Error: ${data.error}`, 'bot');
                     } else {
@@ -102,24 +239,47 @@
                 } catch (err) {
                     addMessage('An error occurred. Please try again.', 'bot');
                 } finally {
-                    // Re-enable form
                     chatSubmit.disabled = false;
+                    loadingIndicator.style.display = 'none';
                     chatInput.focus();
                 }
             });
 
             function addMessage(text, sender) {
-                const msgContainer = document.createElement('div');
-                msgContainer.className = 'msg-container';
-
                 const messageDiv = document.createElement('div');
                 messageDiv.className = `message ${sender}-msg`;
-                messageDiv.textContent = text;
-                
-                msgContainer.appendChild(messageDiv);
-                chatWindow.appendChild(msgContainer);
-                chatWindow.scrollTop = chatWindow.scrollHeight; // Auto-scroll
+                const avatar = document.createElement('div');
+                avatar.className = 'avatar';
+                avatar.textContent = (sender === 'user') ? '🧑' : '🤖';
+                const msgContent = document.createElement('div');
+                msgContent.className = 'msg-content';
+                msgContent.textContent = text; 
+                messageDiv.appendChild(avatar);
+                messageDiv.appendChild(msgContent);
+                chatWindow.appendChild(messageDiv);
+                chatWindow.scrollTop = chatWindow.scrollHeight;
             }
+        }
+    </script>
+    
+    <script>
+        const uploadForm = document.getElementById('upload-form');
+        
+        if (uploadForm) {
+            const fileInput = document.getElementById('file-upload');
+            const fileNameDisplay = document.getElementById('file-name');
+            const uploadButton = document.getElementById('upload-button');
+
+            fileInput.addEventListener('change', function() {
+                if (fileInput.files.length > 0) {
+                    const fileName = fileInput.files[0].name;
+                    fileNameDisplay.textContent = fileName;
+                    uploadButton.disabled = false; 
+                } else {
+                    fileNameDisplay.textContent = 'No file selected';
+                    uploadButton.disabled = true; 
+                }
+            });
         }
     </script>
 
